@@ -20,29 +20,10 @@
 #include "raviart-thomas.h"
 #include "regge.h"
 #include "tp.h"
+#include "wrapper_docs.h"
 
 namespace py = pybind11;
 using namespace libtab;
-
-const std::string tabdoc = R"(
-Tabulate the finite element basis function and derivatives at points.
-If no derivatives are required, use nderiv=0. In 2D and 3D, the derivatives are ordered
-in triangular (or tetrahedral) order, i.e. (0,0),(1,0),(0,1),(2,0),(1,1),(0,2) etc. in 2D.
-
-Parameters
-==========
-nderiv : int
-    Number of derivatives required
-
-points : numpy.ndarray
-    Array of points
-
-Returns
-=======
-List[numpy.ndarray]
-    List of basis values and derivatives at points. Returns a list of length `(n+d)!/(n!d!)`
-    where `n` is the number of derivatives and `d` is the topological dimension.
-)";
 
 PYBIND11_MODULE(libtab, m)
 {
@@ -66,9 +47,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       .value("prism", cell::Type::prism)
       .value("pyramid", cell::Type::pyramid);
 
-  m.def("topology", &cell::topology,
-        "Topological description of a reference cell");
-  m.def("geometry", &cell::geometry, "Geometric points of a reference cell");
+  m.def("topology", &cell::topology, docs["cell::topology"]);
+  m.def("geometry", &cell::geometry, docs["cell::geometry"]);
   m.def("sub_entity_geometry", &cell::sub_entity_geometry,
         "Points of a sub-entity of a cell");
 
@@ -89,7 +69,8 @@ Each element has a `tabulate` function which returns the basis functions and a n
       "Create an element from basic data");
 
   py::class_<FiniteElement>(m, "FiniteElement", "Finite Element")
-      .def("tabulate", &FiniteElement::tabulate, tabdoc.c_str())
+      .def("tabulate", &FiniteElement::tabulate,
+           docs["FiniteElement::tabulate"])
       .def_property_readonly("degree", &FiniteElement::degree)
       .def_property_readonly("cell_type", &FiniteElement::cell_type)
       .def_property_readonly("ndofs", &FiniteElement::ndofs)
