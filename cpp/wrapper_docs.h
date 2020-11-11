@@ -1,8 +1,7 @@
 #include <map>
 #include <string>
 
-std::map<std::string, const char*> docs
-    = {{"cell::topology", R"(
+std::map<std::string, const char*> docs = {{"cell::topology", R"(
 Topological description of a cell. 
 
 Parameters
@@ -17,9 +16,20 @@ List[List[List[int]]]
     has vertices, edges and a face, so the topology is vertices: [[0],[1],[2]], 
     edges: [[1, 2], [0, 2], [0, 1]], face: [0, 1, 2].
 )"},
-       {"cell::geometry", R"(Geometric points of a cell)"},
-       {"FiniteElement::tabulate",
-        R"(
+                                           {"cell::geometry", R"(
+Geometric points of a cell.
+
+Parameters
+==========
+celltype : CellType
+
+Returns
+=======
+numpy.array(dtype=float64)
+    Geometric points of cell, as a 2D array.
+)"},
+                                           {"FiniteElement::tabulate",
+                                            R"(
 Tabulate the finite element basis function and derivatives at points.
 If no derivatives are required, use nderiv=0. In 2D and 3D, the derivatives are ordered
 in triangular (or tetrahedral) order, i.e. (0,0),(1,0),(0,1),(2,0),(1,1),(0,2) etc. in 2D.
