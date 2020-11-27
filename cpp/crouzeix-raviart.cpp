@@ -4,33 +4,30 @@
 // SPDX-License-Identifier:    MIT
 
 #include "crouzeix-raviart.h"
-#include "polynomial-set.h"
+#include "polyset.h"
 #include "quadrature.h"
 #include <Eigen/Dense>
-#include <iostream>
 #include <numeric>
 #include <vector>
 
 using namespace libtab;
 
 //-----------------------------------------------------------------------------
-FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
+FiniteElement cr::create(cell::type celltype, int degree)
 {
   if (degree != 1)
     throw std::runtime_error("Degree must be 1 for Crouzeix-Raviart");
 
-  // Compute facet midpoints
   const int tdim = cell::topological_dimension(celltype);
-  const std::vector<std::vector<int>> facet_topology
-      = cell::topology(celltype)[tdim - 1];
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
-      = cell::geometry(celltype);
+  const std::vector<std::vector<std::vector<int>>> topology
+      = cell::topology(celltype);
+  const std::vector<std::vector<int>> facet_topology = topology[tdim - 1];
+  const Eigen::ArrayXXd geometry = cell::geometry(celltype);
 
   const int ndofs = facet_topology.size();
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pts(
-      ndofs, tdim);
-  pts.setZero();
+  Eigen::ArrayXXd pts = Eigen::ArrayXXd::Zero(ndofs, tdim);
 
+  // Compute facet midpoints
   int c = 0;
   for (const std::vector<int>& f : facet_topology)
   {
@@ -40,28 +37,23 @@ FiniteElement CrouzeixRaviart::create(cell::Type celltype, int degree)
     ++c;
   }
 
-  // Initial coefficients are Identity Matrix
-  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
-
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, 1, 0, pts)[0];
-
+  Eigen::MatrixXd dual = polyset::tabulate(celltype, 1, 0, pts)[0];
   int perm_count = 0;
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  auto new_coeffs
-      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
+  const Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      Eigen::MatrixXd::Identity(ndofs, ndofs), dual);
 
-  const std::vector<std::vector<std::vector<int>>> topology
-      = cell::topology(celltype);
+  // Crouzeix-Raviart has one dof on each entity of tdim-1.
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < topology.size(); ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
-  for (int& q : entity_dofs[tdim - 1])
-    q = 1;
+  entity_dofs[0].resize(topology[0].size(), 0);
+  entity_dofs[1].resize(topology[1].size(), (tdim == 2) ? 1 : 0);
+  entity_dofs[2].resize(topology[2].size(), (tdim == 3) ? 1 : 0);
+  if (tdim == 3)
+    entity_dofs[3] = {0};
 
-  FiniteElement el(celltype, 1, {1}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  return FiniteElement(cr::family_name, celltype, 1, {1}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

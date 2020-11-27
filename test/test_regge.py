@@ -8,8 +8,7 @@ import numpy as np
 
 def test_regge_tri():
     # Simplest element
-    regge = libtab.Regge(libtab.CellType.triangle, 1)
-    assert(sum([sum(w) for w in regge.entity_dofs]) == regge.ndofs)
+    regge = libtab.Regge("triangle", 1)
 
     # tabulate at origin
     pts = [[0.0, 0.0]]
@@ -48,8 +47,7 @@ def test_regge_tri():
 
 def test_regge_tri2():
     # Second order
-    regge = libtab.Regge(libtab.CellType.triangle, 2)
-    assert(sum([sum(w) for w in regge.entity_dofs]) == regge.ndofs)
+    regge = libtab.Regge("triangle", 2)
     # tabulate at origin
     pts = [[0.0, 0.0]]
     w = regge.tabulate(0, pts)[0]
@@ -113,8 +111,7 @@ def test_regge_tri2():
 
 def test_regge_tet():
     # Simplest element
-    regge = libtab.Regge(libtab.CellType.tetrahedron, 1)
-    assert(sum([sum(w) for w in regge.entity_dofs]) == regge.ndofs)
+    regge = libtab.Regge("tetrahedron", 1)
     # tabulate at origin
     pts = [[0.0, 0.0, 0.0]]
     w = regge.tabulate(0, pts)[0]

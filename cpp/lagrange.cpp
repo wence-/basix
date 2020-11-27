@@ -4,111 +4,90 @@
 
 #include "lagrange.h"
 #include "dof-permutations.h"
-#include "polynomial-set.h"
+#include "lattice.h"
+#include "libtab.h"
+#include "polyset.h"
 #include <Eigen/Dense>
 #include <iostream>
+#include <numeric>
 
 using namespace libtab;
 
-FiniteElement Lagrange::create(cell::Type celltype, int degree)
+//----------------------------------------------------------------------------
+FiniteElement libtab::create_lagrange(cell::type celltype, int degree,
+                                      const std::string& name)
 {
-  if (celltype != cell::Type::interval and celltype != cell::Type::triangle
-      and celltype != cell::Type::tetrahedron)
+  if (celltype == cell::type::point)
     throw std::runtime_error("Invalid celltype");
 
-  const int ndofs = polyset::size(celltype, degree);
-  const int tdim = cell::topological_dimension(celltype);
-
-  // Create points at nodes, ordered by topology (vertices first)
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
-      ndofs, tdim);
+  const int ndofs = polyset::dim(celltype, degree);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-
   std::vector<std::vector<int>> entity_dofs(topology.size());
-  for (std::size_t i = 0; i < topology.size(); ++i)
-    entity_dofs[i].resize(topology[i].size(), 0);
 
-  if (ndofs == 1)
+  // Create points at nodes, ordered by topology (vertices first)
+  Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
+  if (degree == 0)
   {
-    if (tdim == 1)
-      pt.row(0) << 0.5;
-    else if (tdim == 2)
-      pt.row(0) << 1.0 / 3, 1.0 / 3;
-    else if (tdim == 3)
-      pt.row(0) << 0.25, 0.25, 0.25;
-    entity_dofs[tdim] = {1};
+    pt = lattice::create(celltype, 0, lattice::type::equispaced, true);
+    for (std::size_t i = 0; i < entity_dofs.size(); ++i)
+      entity_dofs[i].resize(topology[i].size(), 0);
+    entity_dofs[topology.size() - 1][0] = 1;
   }
   else
   {
-    // One dof on each vertex
-    for (int& q : entity_dofs[0])
-      q = 1;
-    // Degree-1 dofs on each edge
-    for (int& q : entity_dofs[1])
-      q = degree - 1;
-    // Triangle
-    if (tdim > 1)
-    {
-      for (int& q : entity_dofs[2])
-        q = (degree - 1) * (degree - 2) / 2;
-    }
-    // Tetrahedron
-    if (tdim > 2)
-      entity_dofs[3] = {(degree - 1) * (degree - 2) * (degree - 3) / 6};
-
-    Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        geometry = cell::geometry(celltype);
     int c = 0;
     for (std::size_t dim = 0; dim < topology.size(); ++dim)
     {
       for (std::size_t i = 0; i < topology[dim].size(); ++i)
       {
-        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                           Eigen::RowMajor>
-            entity_geom = cell::sub_entity_geometry(celltype, dim, i);
+        const Eigen::ArrayXXd entity_geom
+            = cell::sub_entity_geometry(celltype, dim, i);
 
-        Eigen::ArrayXd point = entity_geom.row(0);
-        cell::Type ct = cell::simplex_type(dim);
-
-        const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic,
-                           Eigen::RowMajor>
-            lattice = cell::create_lattice(ct, degree, false);
-        for (int j = 0; j < lattice.rows(); ++j)
+        if (dim == 0)
         {
-          pt.row(c) = entity_geom.row(0);
-          for (int k = 0; k < entity_geom.rows() - 1; ++k)
+          pt.row(c++) = entity_geom.row(0);
+          entity_dofs[0].push_back(1);
+        }
+        else if (dim == topology.size() - 1)
+        {
+          const Eigen::ArrayXXd lattice = lattice::create(
+              celltype, degree, lattice::type::equispaced, false);
+          for (int j = 0; j < lattice.rows(); ++j)
+            pt.row(c++) = lattice.row(j);
+          entity_dofs[dim].push_back(lattice.rows());
+        }
+        else
+        {
+          cell::type ct = cell::sub_entity_type(celltype, dim, i);
+          const Eigen::ArrayXXd lattice
+              = lattice::create(ct, degree, lattice::type::equispaced, false);
+          entity_dofs[dim].push_back(lattice.rows());
+          for (int j = 0; j < lattice.rows(); ++j)
           {
-            pt.row(c) += (entity_geom.row(k + 1) - entity_geom.row(0))
-                         * lattice(j, k);
+            pt.row(c) = entity_geom.row(0);
+            for (int k = 0; k < lattice.cols(); ++k)
+            {
+              pt.row(c) += (entity_geom.row(k + 1) - entity_geom.row(0))
+                           * lattice(j, k);
+            }
+            ++c;
           }
-          ++c;
         }
       }
     }
   }
 
-  // Initial coefficients are Identity Matrix
-  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
-
-  // Point evaluation of basis
-  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
-
-  auto new_coeffs
-      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
-
   int perm_count = 0;
-  for (int i = 1; i < tdim; ++i)
+  for (std::size_t i = 1; i < topology.size() - 1; ++i)
     perm_count += topology[i].size() * i;
 
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
-
-  if (celltype == cell::Type::triangle)
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  if (celltype == cell::type::triangle)
   {
-    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
-        = dofperms::interval_reflection(degree - 1);
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 3; ++edge)
     {
       const int start = 3 + edge_ref.size() * edge;
@@ -119,10 +98,9 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
       }
     }
   }
-  else if (celltype == cell::Type::tetrahedron)
+  else if (celltype == cell::type::tetrahedron)
   {
-    Eigen::Array<int, Eigen::Dynamic, 1> edge_ref
-        = dofperms::interval_reflection(degree - 1);
+    Eigen::ArrayXi edge_ref = dofperms::interval_reflection(degree - 1);
     for (int edge = 0; edge < 6; ++edge)
     {
       const int start = 4 + edge_ref.size() * edge;
@@ -132,10 +110,8 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
         base_permutations[edge](start + i, start + edge_ref[i]) = 1;
       }
     }
-    Eigen::Array<int, Eigen::Dynamic, 1> face_ref
-        = dofperms::triangle_reflection(degree - 2);
-    Eigen::Array<int, Eigen::Dynamic, 1> face_rot
-        = dofperms::triangle_rotation(degree - 2);
+    Eigen::ArrayXi face_ref = dofperms::triangle_reflection(degree - 2);
+    Eigen::ArrayXi face_rot = dofperms::triangle_rotation(degree - 2);
     for (int face = 0; face < 4; ++face)
     {
       const int start = 4 + edge_ref.size() * 6 + face_ref.size() * face;
@@ -149,77 +125,61 @@ FiniteElement Lagrange::create(cell::Type celltype, int degree)
     }
   }
 
-  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  // Point evaluation of basis
+  Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
+
+  return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------
-FiniteElement DiscontinuousLagrange::create(cell::Type celltype, int degree)
+FiniteElement libtab::create_dlagrange(cell::type celltype, int degree,
+                                       const std::string& name)
 {
-  if (celltype != cell::Type::interval and celltype != cell::Type::triangle
-      and celltype != cell::Type::tetrahedron)
+  if (celltype != cell::type::interval and celltype != cell::type::triangle
+      and celltype != cell::type::tetrahedron)
     throw std::runtime_error("Invalid celltype");
 
-  // Only tabulate for scalar. Vector spaces can easily be built from the
-  // scalar space.
+  // Only tabulate for scalar. Vector spaces can easily be built from
+  // the scalar space.
 
-  const int ndofs = polyset::size(celltype, degree);
-  const int tdim = cell::topological_dimension(celltype);
+  const int ndofs = polyset::dim(celltype, degree);
 
-  // Create points at nodes, ordered by topology (vertices first)
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> pt(
-      ndofs, tdim);
-
-  const std::vector<std::vector<std::vector<int>>> topology
+  std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);
-
   std::vector<std::vector<int>> entity_dofs(topology.size());
   for (std::size_t i = 0; i < topology.size(); ++i)
     entity_dofs[i].resize(topology[i].size(), 0);
-  entity_dofs[tdim][0] = ndofs;
+  entity_dofs[topology.size() - 1][0] = ndofs;
 
-  Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> geometry
-      = cell::geometry(celltype);
+  Eigen::ArrayXXd geometry = cell::geometry(celltype);
+  const Eigen::ArrayXXd lattice
+      = lattice::create(celltype, degree, lattice::type::equispaced, true);
 
-  if (ndofs == 1)
+  // Create points at nodes, ordered by topology (vertices first)
+  Eigen::ArrayXXd pt(ndofs, topology.size() - 1);
+  for (int j = 0; j < lattice.rows(); ++j)
   {
-    if (tdim == 1)
-      pt.row(0) << 0.5;
-    else if (tdim == 2)
-      pt.row(0) << 1.0 / 3, 1.0 / 3;
-    else if (tdim == 3)
-      pt.row(0) << 0.25, 0.25, 0.25;
+    pt.row(j) = geometry.row(0);
+    for (int k = 0; k < geometry.rows() - 1; ++k)
+      pt.row(j) += (geometry.row(k + 1) - geometry.row(0)) * lattice(j, k);
   }
-  else
-  {
-    const Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-        lattice = cell::create_lattice(celltype, degree, true);
-
-    for (int j = 0; j < lattice.rows(); ++j)
-    {
-      pt.row(j) = geometry.row(0);
-      for (int k = 0; k < geometry.rows() - 1; ++k)
-        pt.row(j) += (geometry.row(k + 1) - geometry.row(0)) * lattice(j, k);
-    }
-  }
-  // Initial coefficients are Identity Matrix
-  Eigen::MatrixXd coeffs = Eigen::MatrixXd::Identity(ndofs, ndofs);
 
   // Point evaluation of basis
   Eigen::MatrixXd dualmat = polyset::tabulate(celltype, degree, 0, pt)[0];
 
-  auto new_coeffs
-      = FiniteElement::compute_expansion_coefficents(coeffs, dualmat);
+  Eigen::MatrixXd coeffs = compute_expansion_coefficients(
+      Eigen::MatrixXd::Identity(ndofs, ndofs), dualmat);
 
   int perm_count = 0;
-  for (int i = 1; i < tdim; ++i)
-    perm_count += topology[i].size();
+  for (std::size_t i = 1; i < topology.size() - 1; ++i)
+    perm_count += topology[i].size() * i;
 
-  std::vector<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>>
-      base_permutations(perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
+  std::vector<Eigen::MatrixXd> base_permutations(
+      perm_count, Eigen::MatrixXd::Identity(ndofs, ndofs));
 
-  FiniteElement el(celltype, degree, {1}, new_coeffs, entity_dofs,
-                   base_permutations);
-  return el;
+  return FiniteElement(name, celltype, degree, {1}, coeffs, entity_dofs,
+                       base_permutations);
 }
 //-----------------------------------------------------------------------------

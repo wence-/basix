@@ -2,19 +2,16 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "finite-element.h"
-
 #pragma once
+
+#include "libtab.h"
 
 namespace libtab
 {
-class Regge
-{
-  /// Regge element
-public:
-  /// Regge element
-  /// @param celltype
-  /// @param degree
-  static FiniteElement create(cell::Type celltype, int degree);
-};
+/// Create Regge element
+/// @param celltype
+/// @param degree
+FiniteElement create_regge(cell::type celltype, int degree,
+                           const std::string& name = std::string());
+
 } // namespace libtab

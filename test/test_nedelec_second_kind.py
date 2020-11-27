@@ -153,8 +153,8 @@ def test_tri(order):
     g = sympy_nedelec(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    nedelec = libtab.NedelecSecondKind(celltype, order)
-    pts = libtab.create_lattice(celltype, 6, True)
+    nedelec = libtab.create_element("Nedelec 2nd kind H(curl)", "triangle", order)
+    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = 3
     wtab = nedelec.tabulate(nderiv, pts)
 
@@ -176,8 +176,8 @@ def test_tet(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    nedelec = libtab.NedelecSecondKind(celltype, order)
-    pts = libtab.create_lattice(celltype, 6, True)
+    nedelec = libtab.create_element("Nedelec 2nd kind H(curl)", "tetrahedron", order)
+    pts = libtab.create_lattice(celltype, 6, libtab.LatticeType.equispaced, True)
     nderiv = 1
     wtab = nedelec.tabulate(nderiv, pts)
 

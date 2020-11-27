@@ -2,22 +2,22 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
+#pragma once
+
 #include <Eigen/Dense>
 #include <vector>
-
-#pragma once
 
 namespace libtab
 {
 
-/// Information about reference cells
-/// including their topological and geometric data.
+/// Information about reference cells including their topological and
+/// geometric data.
 
 namespace cell
 {
 
 /// Cell type
-enum class Type
+enum class type
 {
   point,
   interval,
@@ -32,58 +32,42 @@ enum class Type
 /// Cell geometry
 /// @param celltype Cell Type
 /// @return Set of vertex points of the cell
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-geometry(cell::Type celltype);
+Eigen::ArrayXXd geometry(cell::type celltype);
 
 /// Cell topology
 /// @param celltype Cell Type
 /// @return List of topology (vertex indices) for each dimension (0..tdim)
-std::vector<std::vector<std::vector<int>>> topology(cell::Type celltype);
+std::vector<std::vector<std::vector<int>>> topology(cell::type celltype);
 
-/// Sub-entity a cell, given by topological dimension and index
-/// @param celltype The cell::Type
+/// Sub-entity of a cell, given by topological dimension and index
+/// @param celltype The cell::type
 /// @param dim Dimension of sub-entity
 /// @param index Local index of sub-entity
 /// @return Set of vertex points of the sub-entity
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-sub_entity_geometry(cell::Type celltype, int dim, int index);
+Eigen::ArrayXXd sub_entity_geometry(cell::type celltype, int dim, int index);
 
 /// Number of sub-entities of a cell by topological dimension
-/// @param celltype The cell::Type
+/// @param celltype The cell::type
 /// @param dim Dimension of sub-entity
 /// @return The number of sub-entities of the given dimension
-int sub_entity_count(cell::Type celltype, int dim);
-
-/// Create a lattice of points on the cell, equispaced along each edge
-/// optionally including the outer surface points
-/// @param celltype The cell::Type
-/// @param n number of points in each direction
-/// @param exterior If set, includes outer boundaries
-/// @return Set of points
-Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>
-create_lattice(cell::Type celltype, int n, bool exterior);
+int sub_entity_count(cell::type celltype, int dim);
 
 /// Get the topological dimension for a given cell type
 /// @param celltype Cell type
 /// @return the topological dimension
-int topological_dimension(cell::Type celltype);
-
-/// Get the cell type of a simplex of given dimension
-/// @param dim Topological dimension
-/// @return cell type
-cell::Type simplex_type(int dim);
+int topological_dimension(cell::type celltype);
 
 /// Get the cell type of a sub-entity of given dimension and index
 /// @param celltype Type of cell
 /// @param dim Topological dimension of sub-entity
 /// @param index Index of sub-entity
 /// @return cell type of sub-entity
-cell::Type sub_entity_type(cell::Type celltype, int dim, int index);
+cell::type sub_entity_type(cell::type celltype, int dim, int index);
 
 /// Convert a cell type string to enum
 /// @param name String
 /// @return cell type
-cell::Type str_to_type(std::string name);
+cell::type str_to_type(std::string name);
 
 } // namespace cell
 } // namespace libtab

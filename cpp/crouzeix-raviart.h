@@ -2,19 +2,21 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "finite-element.h"
-
 #pragma once
+
+#include "libtab.h"
 
 namespace libtab
 {
-class CrouzeixRaviart
+
+/// Crouzeix-Raviart element
+namespace cr
 {
-  /// Crouzeix-Raviart element
-public:
-  /// @note degree must be 1 for Crouzeix-Raviart
-  /// @param celltype
-  /// @param degree
-  static FiniteElement create(cell::Type celltype, int degree);
-};
+/// @note degree must be 1 for Crouzeix-Raviart
+/// @param celltype
+/// @param degree
+FiniteElement create(cell::type celltype, int degree);
+
+static std::string family_name = "Crouzeix-Raviart";
+} // namespace cr
 } // namespace libtab

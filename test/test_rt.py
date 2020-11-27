@@ -143,9 +143,8 @@ def test_tri(order):
     g = sympy_rt(celltype, order)
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
-    rt = libtab.RaviartThomas(celltype, order)
-    assert(sum([sum(w) for w in rt.entity_dofs]) == rt.ndofs)
-    pts = libtab.create_lattice(celltype, 1, True)
+    rt = libtab.create_element("Raviart-Thomas", "triangle", order)
+    pts = libtab.create_lattice(celltype, 1, libtab.LatticeType.equispaced, True)
     nderiv = 3
     wtab = rt.tabulate(nderiv, pts)
 
@@ -167,10 +166,9 @@ def test_tet(order):
     x = sympy.Symbol("x")
     y = sympy.Symbol("y")
     z = sympy.Symbol("z")
-    rt = libtab.RaviartThomas(celltype, order)
-    assert(sum([sum(w) for w in rt.entity_dofs]) == rt.ndofs)
+    rt = libtab.create_element("Raviart-Thomas", "tetrahedron", order)
 
-    pts = libtab.create_lattice(celltype, 5, True)
+    pts = libtab.create_lattice(celltype, 5, libtab.LatticeType.equispaced, True)
     nderiv = 1
     wtab = rt.tabulate(nderiv, pts)
 

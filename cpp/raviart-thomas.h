@@ -2,19 +2,17 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "cell.h"
-#include "finite-element.h"
-
 #pragma once
+
+#include "cell.h"
+#include "libtab.h"
 
 namespace libtab
 {
-class RaviartThomas
-{
-  /// Raviart-Thomas element
-public:
-  /// @param celltype
-  /// @param degree
-  static FiniteElement create(cell::Type celltype, int degree);
-};
+/// Create Raviart-Thomas element
+/// @param celltype
+/// @param degree
+FiniteElement create_rt(cell::type celltype, int degree,
+                        const std::string& = std::string());
+
 } // namespace libtab

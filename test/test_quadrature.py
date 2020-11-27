@@ -7,6 +7,18 @@ import pytest
 import numpy as np
 
 
+@pytest.mark.parametrize("celltype", [(libtab.CellType.quadrilateral, 1.0),
+                                      (libtab.CellType.hexahedron, 1.0),
+                                      (libtab.CellType.prism, 0.5),
+                                      (libtab.CellType.interval, 1.0),
+                                      (libtab.CellType.triangle, 0.5),
+                                      (libtab.CellType.tetrahedron, 1.0/6.0)])
+def test_cell_quadrature(celltype):
+    Qpts, Qwts = libtab.make_quadrature(celltype[0], 3)
+    print(sum(Qwts))
+    assert(np.isclose(sum(Qwts), celltype[1]))
+
+
 @pytest.mark.parametrize("order", [1, 2, 4, 5, 8, 20, 40, 80])
 def test_quadrature_interval(order):
     b = 7.0
@@ -55,9 +67,17 @@ def test_jacobi():
     print(f)
 
 
-@pytest.mark.parametrize("m", np.arange(2, 10))
-def test_gll(m):
+def test_gll():
+    m = 6
     pts, wts = libtab.gauss_lobatto_legendre_line_rule(m)
+    ref_pts = np.array([-1., -0.76505532,
+                        -0.28523152, 0.28523152,
+                        0.76505532, 1.])
+    assert (np.allclose(pts, ref_pts))
+    ref_wts = np.array([0.06666667, 0.37847496,
+                        0.55485838, 0.55485838,
+                        0.37847496, 0.06666667])
+    assert (np.allclose(wts, ref_wts))
     print(pts, wts)
     assert np.isclose(sum(pts*wts), 0)
     assert np.isclose(sum(wts), 2)

@@ -2,18 +2,29 @@
 // FEniCS Project
 // SPDX-License-Identifier:    MIT
 
-#include "finite-element.h"
-
 #pragma once
+
+#include "libtab.h"
+#include <string>
 
 namespace libtab
 {
-class Nedelec
-{
-  /// Nedelec element (first kind)
-public:
-  /// @param celltype
-  /// @param degree
-  static FiniteElement create(cell::Type celltype, int degree);
-};
+/// Create Nedelec element (first kind)
+/// @param celltype
+/// @param degree
+FiniteElement create_nedelec(cell::type celltype, int degree,
+                             const std::string& name = std::string());
+
+// static std::string family_name = "Nedelec 1st kind H(curl)";
+// } // namespace libtab
+
+/// Create Nedelec element (second kind)
+/// @param celltype
+/// @param degree
+FiniteElement create_nedelec2(cell::type celltype, int degree,
+                              const std::string& name = std::string());
+
+// static std::string family_name = "Nedelec 2nd kind H(curl)";
+// } // namespace nedelec2
+
 } // namespace libtab
