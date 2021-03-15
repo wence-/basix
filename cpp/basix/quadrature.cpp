@@ -579,7 +579,6 @@ quadrature::compute_jacobi_deriv(double a, std::size_t n, std::size_t nderiv,
     }
 
     xt::view(J, i, xt::all(), xt::all()) = Jd;
-    // J.push_back(Jd);
   }
 
   xt::xtensor<double, 2> result({nderiv + 1, x.size()});
@@ -613,8 +612,8 @@ std::vector<double> quadrature::compute_gauss_jacobi_points(double a, int m)
       for (int i = 0; i < k; ++i)
         s += 1.0 / (x[k] - x[i]);
       tcb::span<const double> _x(&x[k], 1);
-      const xt::xtensor<double, 1> f
-          = quadrature::compute_jacobi_deriv(a, m, 1, _x);
+      const xt::xtensor<double, 1> f 
+          = xt::col(quadrature::compute_jacobi_deriv(a, m, 1, _x), 0);
       const double delta = f[0] / (f[1] - f[0] * s);
       x[k] -= delta;
 
