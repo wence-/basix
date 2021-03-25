@@ -519,6 +519,10 @@ void FiniteElement::map_push_forward_m(const xt::xtensor<T, 3>& U,
   // std::array<std::size_t, 3> s = {U.shape(0), U.shape(1), U.shape(2)};
   // auto _u = xt::adapt(u, s[0] * s[1] * s[2], xt::no_ownership(), s);
 
+  assert(detJ.size() == U.shape(0));
+  assert(J.shape(0) == U.shape(0));
+  assert(K.shape(0) == U.shape(0));
+  
   // Loop over each point
   for (std::size_t p = 0; p < U.shape(0); ++p)
   {
