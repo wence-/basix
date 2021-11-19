@@ -473,8 +473,7 @@ public:
   /// - `det(J)` -> 1.0/det(J)
   /// - `K` -> `J`
   template <typename O, typename P, typename Q, typename R>
-  std::function<void(O&, const P&, const Q&, double, const R&)>
-  push_forward_fn() const
+  std::function<void(O&, const P&, const Q&, double, const R&)> map_fn() const
   {
     switch (map_type)
     {

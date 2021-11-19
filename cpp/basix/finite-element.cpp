@@ -727,7 +727,7 @@ xt::xtensor<double, 3> FiniteElement::map_push_forward(
                         xt::xall<std::size_t>>;
   using K_t = xt::xview<decltype(K)&, std::size_t, xt::xall<std::size_t>,
                         xt::xall<std::size_t>>;
-  auto map = this->push_forward_fn<u_t, U_t, J_t, K_t>();
+  auto map = this->map_fn<u_t, U_t, J_t, K_t>();
   for (std::size_t i = 0; i < u.shape(0); ++i)
   {
     auto _K = xt::view(K, i, xt::all(), xt::all());
