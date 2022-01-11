@@ -205,7 +205,19 @@ basix::FiniteElement basix::create_element(element::family family,
   case element::family::bubble:
     return element::create_bubble(cell, degree, discontinuous);
   case element::family::serendipity:
-    return element::create_serendipity(cell, degree, discontinuous);
+  {
+    if (degree < 3)
+    {
+      return element::create_serendipity(
+          cell, degree, element::polynomial_moment_variant::lagrange_equispaced,
+          discontinuous);
+    }
+    else
+    {
+      throw std::runtime_error("serendipity elements of degree > 2 need to be "
+                               "given a polynomial moment variant.");
+    }
+  }
   case element::family::DPC:
     return element::create_dpc(cell, degree, discontinuous);
   default:
@@ -215,23 +227,44 @@ basix::FiniteElement basix::create_element(element::family family,
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           element::lagrange_variant variant,
+                                           element::lagrange_variant lvariant,
                                            bool discontinuous)
 {
   switch (family)
   {
   case element::family::P:
-    return element::create_lagrange(cell, degree, variant, discontinuous);
+    return element::create_lagrange(cell, degree, lvariant, discontinuous);
   default:
     throw std::runtime_error("Cannot pass a Lagrange variant.");
   }
 }
 //-----------------------------------------------------------------------------
+basix::FiniteElement
+basix::create_element(element::family family, cell::type cell, int degree,
+                      element::polynomial_moment_variant pvariant,
+                      bool discontinuous)
+{
+  switch (family)
+  {
+  case element::family::serendipity:
+    return element::create_serendipity(cell, degree, pvariant, discontinuous);
+  default:
+    throw std::runtime_error("Cannot pass a polynomial moment variant.");
+  }
+}
+//-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,
                                            cell::type cell, int degree,
-                                           element::lagrange_variant variant)
+                                           element::lagrange_variant lvariant)
 {
-  return create_element(family, cell, degree, variant, false);
+  return create_element(family, cell, degree, lvariant, false);
+}
+//-----------------------------------------------------------------------------
+basix::FiniteElement
+basix::create_element(element::family family, cell::type cell, int degree,
+                      element::polynomial_moment_variant pvariant)
+{
+  return create_element(family, cell, degree, pvariant, false);
 }
 //-----------------------------------------------------------------------------
 basix::FiniteElement basix::create_element(element::family family,

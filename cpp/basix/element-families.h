@@ -25,9 +25,26 @@ enum class lagrange_variant
   gl_warped = 7,
   gl_isaac = 8,
   gl_centroid = 9,
-  integral_legendre = 10,
-  integral_chebyshev = 11,
   vtk = 20,
+  integral_legendre = 50,
+  integral_chebyshev = 51,
+};
+
+/// An enum defining the sets of polynomials that moments can be taken against
+enum class polynomial_moment_variant
+{
+  lagrange_equispaced = 0,
+  lagrange_gll_warped = 1,
+  lagrange_gll_isaac = 2,
+  lagrange_gll_centroid = 3,
+  lagrange_chebyshev_warped = 4,
+  lagrange_chebyshev_isaac = 5,
+  lagrange_chebyshev_centroid = 6,
+  lagrange_gl_warped = 7,
+  lagrange_gl_isaac = 8,
+  lagrange_gl_centroid = 9,
+  legendre = 10,
+  chebyshev = 11,
 };
 
 /// Enum of available element families

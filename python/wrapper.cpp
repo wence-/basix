@@ -379,10 +379,31 @@ Interface to the Basix C++ library.
       .value("gl_warped", element::lagrange_variant::gl_warped)
       .value("gl_isaac", element::lagrange_variant::gl_isaac)
       .value("gl_centroid", element::lagrange_variant::gl_centroid)
-      .value("integral_legendre", element::lagrange_variant::integral_legendre)
-      .value("integral_chebyshev",
-             element::lagrange_variant::integral_chebyshev)
       .value("vtk", element::lagrange_variant::vtk);
+
+  py::enum_<element::polynomial_moment_variant>(m, "PolynomialMomentVariant")
+      .value("lagrange_equispaced",
+             element::polynomial_moment_variant::lagrange_equispaced)
+      .value("lagrange_gll_warped",
+             element::polynomial_moment_variant::lagrange_gll_warped)
+      .value("lagrange_gll_isaac",
+             element::polynomial_moment_variant::lagrange_gll_isaac)
+      .value("lagrange_gll_centroid",
+             element::polynomial_moment_variant::lagrange_gll_centroid)
+      .value("lagrange_chebyshev_warped",
+             element::polynomial_moment_variant::lagrange_chebyshev_warped)
+      .value("lagrange_chebyshev_isaac",
+             element::polynomial_moment_variant::lagrange_chebyshev_isaac)
+      .value("lagrange_chebyshev_centroid",
+             element::polynomial_moment_variant::lagrange_chebyshev_centroid)
+      .value("lagrange_gl_warped",
+             element::polynomial_moment_variant::lagrange_gl_warped)
+      .value("lagrange_gl_isaac",
+             element::polynomial_moment_variant::lagrange_gl_isaac)
+      .value("lagrange_gl_centroid",
+             element::polynomial_moment_variant::lagrange_gl_centroid)
+      .value("legendre", element::polynomial_moment_variant::legendre)
+      .value("chebyshev", element::polynomial_moment_variant::chebyshev);
 
   // Create FiniteElement
   m.def(
@@ -399,13 +420,24 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant variant, bool discontinuous) -> FiniteElement
-      {
-        return basix::create_element(family_name, cell_name, degree, variant,
+         element::lagrange_variant lvariant,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, lvariant,
                                      discontinuous);
       },
-      basix::docstring::create_element__family_cell_degree_variant_discontinuous
-          .c_str());
+      basix::docstring::
+          create_element__family_cell_degree_lvariant_discontinuous.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::polynomial_moment_variant pvariant,
+         bool discontinuous) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, pvariant,
+                                     discontinuous);
+      },
+      basix::docstring::
+          create_element__family_cell_degree_pvariant_discontinuous.c_str());
 
   m.def(
       "create_element",
@@ -417,10 +449,18 @@ Interface to the Basix C++ library.
   m.def(
       "create_element",
       [](element::family family_name, cell::type cell_name, int degree,
-         element::lagrange_variant variant) -> FiniteElement {
-        return basix::create_element(family_name, cell_name, degree, variant);
+         element::lagrange_variant lvariant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, lvariant);
       },
-      basix::docstring::create_element__family_cell_degree_variant.c_str());
+      basix::docstring::create_element__family_cell_degree_lvariant.c_str());
+
+  m.def(
+      "create_element",
+      [](element::family family_name, cell::type cell_name, int degree,
+         element::polynomial_moment_variant pvariant) -> FiniteElement {
+        return basix::create_element(family_name, cell_name, degree, pvariant);
+      },
+      basix::docstring::create_element__family_cell_degree_pvariant.c_str());
 
   // Interpolate between elements
   m.def(

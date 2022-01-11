@@ -541,17 +541,38 @@ xt::xtensor<double, 2> make_serendipity_curl_space_3d(int degree)
   return wcoeffs;
 }
 //----------------------------------------------------------------------------
+element::lagrange_variant
+pvariant_to_lvariant(element::polynomial_moment_variant variant)
+{
+  switch (variant)
+  {
+  case element::polynomial_moment_variant::lagrange_equispaced:
+    return element::lagrange_variant::equispaced;
+  default:
+    throw std::runtime_error("Unsupported variant");
+  }
+  //----------------------------------------------------------------------------
 } // namespace
 
 //----------------------------------------------------------------------------
-FiniteElement basix::element::create_serendipity(cell::type celltype,
-                                                 int degree, bool discontinuous)
+FiniteElement
+basix::element::create_serendipity(cell::type celltype, int degree,
+                                   element::polynomial_moment_variant variant,
+                                   bool discontinuous)
 {
   if (celltype != cell::type::interval and celltype != cell::type::quadrilateral
       and celltype != cell::type::hexahedron)
   {
     throw std::runtime_error("Invalid celltype");
   }
+
+  if (variant == element::polynomial_moment_variant::legendre
+      or variant == element::polynomial_moment_variant::chebyshev)
+  {
+    throw std::runtime_error("Not implemented yet");
+  }
+
+  element::lagrange_variant lvariant = pvariant_to_lvariant(variant);
 
   const std::vector<std::vector<std::vector<int>>> topology
       = cell::topology(celltype);

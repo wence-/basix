@@ -904,13 +904,27 @@ private:
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-/// @param[in] variant The variant of Lagrange to use
+/// @param[in] lvariant The variant of Lagrange to use
 /// @param[in] discontinuous Indicates whether the element is discontinuous
 /// between cells points of the element. The discontinuous element will have the
 /// same DOFs, but they will all be associated with the interior of the cell.
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant variant,
+                             int degree, element::lagrange_variant lvariant,
+                             bool discontinuous);
+
+/// Create an element using a given polynomial moment variant
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] pvariant The polynomial moment variant to use
+/// @param[in] discontinuous Indicates whether the element is discontinuous
+/// between cells points of the element. The discontinuous element will have the
+/// same DOFs, but they will all be associated with the interior of the cell.
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree,
+                             element::polynomial_moment_variant pvariant,
                              bool discontinuous);
 
 /// Create an element
@@ -928,10 +942,20 @@ FiniteElement create_element(element::family family, cell::type cell,
 /// @param[in] family The element family
 /// @param[in] cell The reference cell type that the element is defined on
 /// @param[in] degree The degree of the element
-/// @param[in] variant The variant of Lagrange to use
+/// @param[in] lvariant The variant of Lagrange to use
 /// @return A finite element
 FiniteElement create_element(element::family family, cell::type cell,
-                             int degree, element::lagrange_variant variant);
+                             int degree, element::lagrange_variant lvariant);
+
+/// Create a continuous element using a given polynomial moment variant
+/// @param[in] family The element family
+/// @param[in] cell The reference cell type that the element is defined on
+/// @param[in] degree The degree of the element
+/// @param[in] pvariant The polynomial moment variant to use
+/// @return A finite element
+FiniteElement create_element(element::family family, cell::type cell,
+                             int degree,
+                             element::polynomial_moment_variant pvariant);
 
 /// Create a continuous element
 /// @param[in] family The element family

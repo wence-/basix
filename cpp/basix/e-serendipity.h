@@ -12,10 +12,12 @@ namespace basix::element
 /// Create a serendipity element on cell with given degree
 /// @param[in] celltype The cell type
 /// @param[in] degree The degree of the element
+/// @param[in] variant The type of polynomials used for integral moments
 /// @param[in] discontinuous Controls whether the element is continuous or
 /// discontinuous
 /// @return A finite element
 FiniteElement create_serendipity(cell::type celltype, int degree,
+                                 element::polynomial_moment_variant variant,
                                  bool discontinuous);
 
 /// Create a serendipity H(div) element on cell with given degree
